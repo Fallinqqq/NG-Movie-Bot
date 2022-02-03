@@ -1,15 +1,15 @@
+from asyncio.windows_events import NULL
 import discord
 from discord.ext import commands
 
-botIntents = discord.Intents.default()
-botIntents.members = True
 
-bot = commands.Bot(command_prefix="!", intents=botIntents)
+bot = commands.Bot(command_prefix="!")
 
+# region Events
 
 @bot.event
 async def on_ready():
-    print("Bot is running...")
+    print(f"{bot.user.name} is running...")
 
 
 @bot.event
@@ -18,6 +18,9 @@ async def on_message(message):
         return()
     await bot.process_commands(message)
 
+# endregion Events
+
+# region Commands
 
 @bot.command(name="hi")
 async def say_hi(ctx):
@@ -26,26 +29,30 @@ async def say_hi(ctx):
     await ctx.send(response)
 
 
+async def read_history(channel_to_read, server_member):
+    counter = 0
+    async for message in channel_to_read.history(limit=None):
+        if message.author == server_member:
+            counter += 1
+    return counter
+
+
 @bot.command(pass_context=True)
-@commands.has_permissions(manage_messages=True)
-async def members(ctx, *args):
+async def history(ctx, target_member: discord.Member, target_channel: discord.TextChannel = NULL):
     server = ctx.message.guild
-    role_name = (' '.join(args))
-    role_id = server.roles[0]
-    for role in server.roles:
-        if role_name == role.name:
-            role_id = role
-            break
+    server_channels = server.text_channels
+
+    if(target_channel == NULL):
+        total_count = 0
+        for server_channel in server_channels:
+            total_count += await read_history(server_channel, target_member)
+        await ctx.send(f'{target_member.display_name} has sent **{total_count}** messages in all channels.')
     else:
-        await ctx.send(f"Role '{role_name}' doesn't exist")
-        return
-    for member in server.members:
-        for role in member.roles:
-            if(role.name == role_id.name):
-                await ctx.send(f"{member.display_name} - {member.id}")
+        await ctx.send(f'{target_member.display_name} has sent **{await read_history(target_channel, target_member)}** messages in the {target_channel.mention} channel.')
 
+# endregion Commands
 
-#readline() for first line only, allows to have multiple keys in one file
-#strip() to remove the trailing newline "\n"
+# readline() for first line only, allows to have multiple keys in one file
+# strip() to remove the trailing newline "\n"
 botKey = open("BotKey.txt").readline().strip()
 bot.run(botKey)
