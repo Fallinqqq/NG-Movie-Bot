@@ -1,11 +1,10 @@
-from ast import Delete
-from email import message
-from urllib import response
-
 import discord
 from discord.ext import commands
 
-bot = commands.Bot("!")
+botIntents = discord.Intents.default()
+botIntents.members = True
+
+bot = commands.Bot(command_prefix="!", intents=botIntents)
 
 
 @bot.event
@@ -27,13 +26,26 @@ async def say_hi(ctx):
     await ctx.send(response)
 
 
-@bot.command(name="bye")
-async def end_convo(ctx):
-    name = ctx.author.name
-    response = f'Goodbye {name}'
-    await ctx.send(response)
+@bot.command(pass_context=True)
+@commands.has_permissions(manage_messages=True)
+async def members(ctx, *args):
+    server = ctx.message.guild
+    role_name = (' '.join(args))
+    role_id = server.roles[0]
+    for role in server.roles:
+        if role_name == role.name:
+            role_id = role
+            break
+    else:
+        await ctx.send(f"Role '{role_name}' doesn't exist")
+        return
+    for member in server.members:
+        for role in member.roles:
+            if(role.name == role_id.name):
+                await ctx.send(f"{member.display_name} - {member.id}")
 
 
-botKeyFile = open("BotKey.txt")
-
-bot.run(botKeyFile.read())
+#readline() for first line only, allows to have multiple keys in one file
+#strip() to remove the trailing newline "\n"
+botKey = open("BotKey.txt").readline().strip()
+bot.run(botKey)
