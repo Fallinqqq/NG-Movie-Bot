@@ -36,7 +36,7 @@ async def read_history(channel_to_read, server_member):
             counter += 1
     return counter
 
-
+# When "name=" is not defined the command is the function name, in the case below is "history"
 @bot.command(pass_context=True)
 async def history(ctx, target_member: discord.Member, target_channel: discord.TextChannel = NULL):
     server = ctx.message.guild
@@ -47,7 +47,7 @@ async def history(ctx, target_member: discord.Member, target_channel: discord.Te
         for server_channel in server_channels:
             total_count += await read_history(server_channel, target_member)
         await ctx.send(f'{target_member.display_name} has sent **{total_count}** messages in all channels.')
-    else:
+    else: 
         await ctx.send(f'{target_member.display_name} has sent **{await read_history(target_channel, target_member)}** messages in the {target_channel.mention} channel.')
 
 # endregion Commands
